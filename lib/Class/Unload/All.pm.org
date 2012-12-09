@@ -1,0 +1,40 @@
+package Class::Unload::All;
+
+use strict;
+use warnings;
+use 5.010;
+use Class::Unload;
+use Module::Used qw/ modules_used_in_files /;
+
+my $caller_class;
+
+sub import {
+	my $class = caller;
+$caller_class = $class;
+	no strict 'refs';
+#	*{"$class\::BEGIN"} = sub {
+		my $path = _path($class);
+		my @modules = modules_used_in_files($path);
+		for my $module (@modules) {
+			warn $module;
+			Class::Unload->unload($module);
+		}
+#	};
+}
+#CHECK {
+#	my $path = _path($caller_class);
+#	warn $path;
+#	my @modules = modules_used_in_files($path);
+#	for my $module (@modules) {
+#		warn $module;
+#		Class::Unload->unload($module);
+#	}
+#}
+sub _path {
+	my $class = shift;
+	$class =~ s!::!/!g;
+	$class .= '.pm';
+	return $INC{$class};
+}
+
+1;
